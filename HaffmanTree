@@ -1,0 +1,156 @@
+#define _CRT_SECURE_NO_WARNINGS 1
+#pragma once
+#include<iostream>
+#include <queue>
+#include<vector>
+using namespace std;
+
+template<class W>
+struct HuffmanTreeNode
+{
+	HuffmanTreeNode(const W &weight)
+	: _pLeft(NULL)
+	, _pRight(NULL)
+	, _pParent(NULL)
+	, _weight(weight)
+	{}
+	HuffmanTreeNode<W>*_pLeft;
+	HuffmanTreeNode<W>*_pRight;
+	HuffmanTreeNode<W>*_pParent;
+	W _weight;
+};
+
+template<class W>
+class HuffmanTree
+{
+	typedef HuffmanTreeNode<W>*PNode;
+public:
+		HuffmanTree()
+		: _pRoot(NULL)
+	{}
+	HuffmanTree(W*array, size_t size, const W&invalid)
+	{
+		_CreateHuffmantree(array,  size, invalid);
+
+	}
+	void _Destroy(PNode&pRoot)
+	{
+		//后序
+		if (pRoot)
+		{
+			_Destroy(pRoot->_pLeft);
+			_Destroy(pRoot->_pRight);
+			delete pRoot;
+			pRoot = NULL;
+		}
+	}
+	~HuffmanTree()
+	{
+		_Destroy(_pRoot);
+	}
+	PNode GetRoot()
+	{
+		return  _pRoot;
+	}
+private:	
+	//构建哈夫曼树
+	void _CreateHuffmantree(W*array, size_t size, const W&invalid)
+	{
+		
+		struct PtrNodeCompare
+		{
+			bool operator()(PNode n1, PNode n2)//重载“（）”
+			{
+				//return (n1->_weight)._count > (n1->_weight)._count;
+				return n1->_weight <  n2->_weight;
+			}
+		};
+		priority_queue<PNode, vector<PNode>, PtrNodeCompare>hp;
+
+		for (size_t i = 0; i < size; ++i)
+		{
+			if (array[i] != invalid)
+			{
+
+				//PNode p = new HuffmanTreeNode<W>(array[i]);
+				hp.push(new HuffmanTreeNode<W>(array[i]));
+			}
+		}
+		//空堆
+		if (hp.empty())
+			_pRoot = NULL;
+		while (hp.size()>1)
+		{
+			PNode pLeft = hp.top();
+			hp.pop();
+			PNode pRight = hp.top();
+			hp.pop();
+			PNode pParent = new HuffmanTreeNode<W>(pLeft->_weight + pRight->_weight);//左加右的权值，作为新节点
+			pParent->_pLeft = pLeft;
+			pLeft->_pParent = pParent;
+
+			pParent->_pRight = pRight;
+			pRight->_pParent = pParent;
+			hp.push(pParent);
+		}
+		_pRoot = hp.top();
+	}
+	
+public:
+	PNode _pRoot;
+};
+/*void Test()
+{
+		int  a[]= { 5, 0,3, 1, 7 };
+	HuffmanTree<int>ht(a,sizeof(a)/sizeof(a[0]), 0);
+}*/
+
+///////////////////////////////////////////////////////////
+//#define _CRT_SECURE_NO_WARNINGS 1
+//#pragma once
+//#include<stdio.h>
+//#include<stdlib.h>
+//#include<assert.h>
+//#include<iostream>
+//#include<string>
+//using  namespace std;
+//#include"haffman.hpp"
+//
+//using namespace std;
+//struct CharInfo
+//{
+//	CharInfo(size_t count = 0)
+//	:_count(count)
+//	{}
+//	bool operator!= (const CharInfo&info)
+//	{
+//		return  _count != info._count;
+//	}
+//	bool operator== (const CharInfo&info)
+//	{
+//		return  _count == info._count;
+//	}
+//	CharInfo operator+(const CharInfo&info)
+//	{
+//		CharInfo temp(*this);
+//		temp._count += info._count;
+//		return temp;
+//	}
+//	bool operator<(const CharInfo&info)
+//	{
+//		return _count < info._count;
+//	}
+//	char _ch;//字符
+//	long long _count;//当前字符出现的次数
+//	string _strCode; //当前字符对应的编码
+//};
+//void Test()
+//{
+//	CharInfo a[2] = {};
+//	a[0]._count = 2;
+//	a[1]._count = 3;
+//	a[0]._ch = 'a';
+//	a[1]._ch = 'b';
+//	HuffmanTree<CharInfo>ht(a, 2, CharInfo(0));//参数：数组，256个，无效值（出现0次）
+//
+//}
