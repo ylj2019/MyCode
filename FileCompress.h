@@ -82,8 +82,6 @@ public:
 		compressfile += ".huffman";//?
 		FILE*fin = fopen(compressfile.c_str(),"wb");//打开压缩文件
 		assert(fin);
-
-
 		string code;
 		GenerateHuffmanCode(tree.GetRoot(), code);
 		
@@ -203,14 +201,12 @@ public:
 		}
 		fclose(fin);
 		fclose(fout);
-
 	}
 protected:
 	CharInfo _infos[256];
 };
 void TestFileCompress()
 {
-	
 	FileCompress fc;
 	FileCompress fc1;
 	//fc.Compress("s.txt");
