@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS 1
 #pragma once
 #include<iostream>
 #include <queue>
@@ -76,7 +75,7 @@ private:
 				hp.push(new HuffmanTreeNode<W>(array[i]));
 			}
 		}
-		//空堆
+		//空
 		if (hp.empty())
 			_pRoot = NULL;
 		while (hp.size()>1)
