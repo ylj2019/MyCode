@@ -1,13 +1,13 @@
 #define _CRT_SECURE_NO_WARNINGS 1
 #pragma once
-#include"Haffman.hpp"
+#include"haffman.hpp"
 #include<iostream>
 #include<vector>
 using namespace std;
 #include<assert.h>
 
 typedef long long LongType;
-
+//数组内的元素类型
 struct CharInfo
 {
 	char _ch;//字符
@@ -33,7 +33,7 @@ struct CharInfo
 class FileCompress
 {
 	typedef HuffmanTreeNode<CharInfo> Node;
-	struct TmpInfo
+	struct TmpInfo//辅助文件：数组元素类型
 	{
 		char _ch;//字符
 		LongType _count;//次数
@@ -49,7 +49,7 @@ public:
 		}
 	}
 	//获取哈夫曼编码
-	void GenerateHuffmanCode(Node*root,string code)//code不能传引用??
+	void GenerateHuffmanCode(Node*root,string code)
 	{
 		if (root == NULL)
 			return;
@@ -70,23 +70,26 @@ public:
 		char ch = fgetc(fout);
 		while (ch != EOF||feof(fout)==0)//如文件结束，则返回值为1，否则为0
 		{
+			//无符号
 			_infos[(unsigned char)ch]._count++;
 			ch = fgetc(fout);
 		}
+
 		//2.生成Huffmantree 及code
 		CharInfo invalid;
 		invalid._count = 0;
 		HuffmanTree<CharInfo>tree(_infos, 256, invalid);//参数：数组，256个，无效值（出现0次）
 		
-		string compressfile = file;//
-		compressfile += ".huffman";//?
-		FILE*fin = fopen(compressfile.c_str(),"wb");//打开压缩文件
+		string compressfile = file;
+		compressfile += ".huffman";
+		FILE*fin = fopen(compressfile.c_str(),"wb");//打开压缩文件，
+		//https://zhidao.baidu.com/question/104592558.html
 		assert(fin);
+
 		string code;
 		GenerateHuffmanCode(tree.GetRoot(), code);
 		
-		//3.0写入字符出现的信息
-		//fwrite(_infos, sizeof(CharInfo), 256, fin);
+		//3.0写入字符出现的信息:辅助文件，为了解压缩
 		int writeNum = 0;
 		int objSize = sizeof(TmpInfo);
 		for (rsize_t i = 0; i < 256; ++i)
@@ -96,15 +99,18 @@ public:
 				TmpInfo info;
 				info._ch = _infos[i]._ch;
 				info._count = _infos[i]._count;
-				fwrite(&info, objSize, 1, fin);
+				//把info._ch、info._count写入压缩文件
+				fwrite(&info, objSize, 1, fin);//每一次sizeof(objSize),时间消耗大
 				writeNum++;
 			}
 		}
+		//写入压缩文件：info._count=-1(出现次数)作为结束标志，区分次数和正文
 		TmpInfo info;
 		info._count = -1;
-		fwrite(&info, objSize, 1, fin);//把info._count = -1写进去作为结束标志位
+		fwrite(&info, objSize, 1, fin);
 
-		//3.压缩
+		//3.1压缩正文
+		//重定位流上的文件指针到开始
 		fseek(fout, 0, SEEK_SET);//文件指针、偏移量、参照位置
 			ch = fgetc(fout);
 			char value = 0;
@@ -131,17 +137,17 @@ public:
 						value = 0;
 						pos = 0;
 					}
-
 				}
 				ch = fgetc(fout);
 			}
-			if (pos > 0)
+			if (pos > 0)//不够8位，直接写进去，后面根节大小（总字符个数）保底
 			{
 				fputc(value, fin);//写入压缩文件（fin）
 			}
 			fclose(fout);
 			fclose(fin);
 	}
+
 	void uncompress(const char *file)
 	{
 		string uncompressfile = file;//file:Input.txt.huffman
@@ -153,24 +159,22 @@ public:
 		assert(fin);
 		FILE*fout = fopen(file, "rb");//打开压缩文件
 		assert(fout);
-		//fread(_infos, sizeof(CharInfo), 256, fout);
-		//3.0读入字符出现的信息
+		//1.0读入字符出现的信息，存放在TmpInfo结构体数组中
 		TmpInfo info;
-		int cycleNum = 1;
 		int objSize = sizeof(TmpInfo);
 		fread(&info, objSize, 1, fout);
 		
 		while (info._count != -1)//-1为结束标志
 		{
+
 			_infos[(unsigned char)info._ch]._ch = info._ch;
 			_infos[(unsigned char)info._ch]._count= info._count;
 
 			fread(&info, objSize, 1, fout);
-			cycleNum++;
+
 		}
 
-		int aaa = 0;
-		//重建huaffman树
+		//2.0根据_infos结构体数据，重建huaffman树
 		CharInfo invalid;
 		invalid._count = 0;
 		HuffmanTree<CharInfo>tree(_infos, 256, invalid);//参数：数组，256个，无效值（出现0次）
@@ -201,23 +205,16 @@ public:
 		}
 		fclose(fin);
 		fclose(fout);
+
 	}
 protected:
 	CharInfo _infos[256];
 };
 void TestFileCompress()
 {
-	FileCompress fc;
+
 	FileCompress fc1;
-	//fc.Compress("s.txt");
-	//fc1.uncompress("s.txt.huffman");
+	fc1.Compress("Input.txt");
+	fc1.uncompress("Input.txt.huffman");
 
-	//fc.Compress("Input.txt");
-	//fc1.uncompress("Input.txt.huffman");
-
-	fc.Compress("1.txt");
-	fc1.uncompress("1.txt.huffman");
-
-	//fc.Compress("zhizhen.doc");
-	//fc1.uncompress("zhizhen.doc.huffman");
 }
